@@ -208,6 +208,26 @@ describe Commands::Out do
                                ])
         end
 
+        context 'with custom description' do
+          before do
+            File.write(File.join(dest_dir, 'description'), 'my custom description')
+          end
+
+          it 'sets custom description for status' do
+            stub_status_post.with(body: hash_including('description' => 'my custom description'))
+
+            put('params' => { 'status' => 'success', 'path' => 'resource', 'description' => 'resource/description' }, 'source' => { 'repo' => 'jtarchie/test' })
+          end
+
+          context 'when the description file does not exist' do
+            it 'returns a helpful error message' do
+              expect do
+                put('params' => { 'status' => 'success', 'path' => 'resource', 'description' => 'resource/description-doesnt-exist' }, 'source' => { 'repo' => 'jtarchie/test' })
+              end.to raise_error '`description` "resource/description-doesnt-exist" does not exist'
+            end
+          end
+        end
+
         context 'with base_url defined on source' do
           it 'sets the target_url for status' do
             stub_status_post.with(body: hash_including('target_url' => 'http://example.com/builds/1234'))
@@ -225,8 +245,29 @@ describe Commands::Out do
           end
         end
 
+        context 'with custom target URL defined' do
+          before do
+            File.write(File.join(dest_dir, 'target_url'), 'http://www.example.com')
+          end
+
+          it 'sets custom target_url for status' do
+            ENV['ATC_EXTERNAL_URL'] = 'http://atc-endpoint.com'
+            stub_status_post.with(body: hash_including('target_url' => 'http://www.example.com'))
+
+            put('params' => { 'status' => 'success', 'path' => 'resource', 'target_url' => 'resource/target_url' }, 'source' => { 'repo' => 'jtarchie/test' })
+          end
+
+          context 'when the target url file does not exist' do
+            it 'returns a helpful error message' do
+              expect do
+                put('params' => { 'status' => 'success', 'path' => 'resource', 'target_url' => 'resource/target-url-doesnt-exist' }, 'source' => { 'repo' => 'jtarchie/test' })
+              end.to raise_error '`target_url` "resource/target-url-doesnt-exist" does not exist'
+            end
+          end
+        end
+
         it 'sets the a default context on the status' do
-          stub_status_post.with(body: hash_including('context' => 'concourse-ci/status'))
+          stub_status_post.with(body: hash_including('context' => 'concourse-ci/status', 'description': 'Concourse CI build success'))
 
           put('params' => { 'status' => 'success', 'path' => 'resource' }, 'source' => { 'repo' => 'jtarchie/test' })
         end

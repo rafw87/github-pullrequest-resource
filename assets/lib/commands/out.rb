@@ -26,6 +26,16 @@ module Commands
         raise %(`comment` "#{params.comment}" does not exist) unless File.exist?(comment_path)
       end
 
+      if params.description
+        description_path = File.join(destination, params.description)
+        raise %(`description` "#{params.description}" does not exist) unless File.exist?(description_path)
+      end
+
+      if params.target_url
+        target_url_path = File.join(destination, params.target_url)
+        raise %(`target_url` "#{params.target_url}" does not exist) unless File.exist?(target_url_path)
+      end
+
       if params.merge.commit_msg
         commit_path = File.join(destination, params.merge.commit_msg)
         raise %(`merge.commit_msg` "#{params.merge.commit_msg}" does not exist) unless File.exist?(commit_path)
@@ -49,13 +59,29 @@ module Commands
       contextes = params.context || ['status']
       contextes = [contextes] unless contextes.is_a?(Array)
 
+      description = nil
+      if params.description
+        description_path = File.join(destination, params.description)
+        description = File.read(description_path, encoding: Encoding::UTF_8)
+        metadata << { 'name' => 'description', 'value' => description }
+      end
+
+      target_url = nil
+      if params.target_url
+        target_url_path = File.join(destination, params.target_url)
+        target_url = File.read(target_url_path, encoding: Encoding::UTF_8)
+        metadata << { 'name' => 'target_url', 'value' => target_url }
+      end
+
       contextes.each do |context|
         Status.new(
           state: params.status,
           atc_url: atc_url,
           sha: sha,
           repo: repo,
-          context: whitelist(context: context)
+          context: whitelist(context: context),
+          description: description,
+          target_url: target_url
         ).create!
       end
 
