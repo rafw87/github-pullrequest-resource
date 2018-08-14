@@ -10,6 +10,8 @@ RUN set -ex; \
   openssh-client \
   perl \
   ruby \
+  ruby-dev \
+  alpine-sdk \
   ruby-json \
   ruby-bundler \
   ; \
